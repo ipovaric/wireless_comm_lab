@@ -36,7 +36,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '256'
+    value: '128000'
   states:
     bus_sink: false
     bus_source: false
@@ -86,12 +86,12 @@ blocks:
     minoutbuf: '0'
     num_samps: '1000'
     repeat: 'True'
-    type: byte
+    type: short
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [176, 84.0]
+    coordinate: [126, 82]
     rotation: 0
     state: enabled
 - name: blocks_add_xx_0
@@ -109,16 +109,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [464, 192.0]
+    coordinate: [704, 104.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: blocks_delay_0
   id: blocks_delay
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    delay: '0'
+    delay: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
     num_ports: '1'
@@ -128,9 +128,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [671, 125]
+    coordinate: [848, 120.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -146,9 +146,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [549, 243]
-    rotation: 180
-    state: disabled
+    coordinate: [512, 164.0]
+    rotation: 0
+    state: enabled
 - name: blocks_short_to_char_0
   id: blocks_short_to_char
   parameters:
@@ -162,9 +162,28 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [626, 383]
+    coordinate: [952, 392.0]
     rotation: 180
-    state: disabled
+    state: enabled
+- name: blocks_stream_to_tagged_stream_0
+  id: blocks_stream_to_tagged_stream
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    len_tag_key: length
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packet_len: '1'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [632, 460.0]
+    rotation: 180
+    state: enabled
 - name: blocks_throttle_0
   id: blocks_throttle
   parameters:
@@ -175,37 +194,15 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     samples_per_second: samp_rate
-    type: byte
+    type: short
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [376, 108.0]
+    coordinate: [325, 106]
     rotation: 0
     state: enabled
-- name: digital_ofdm_carrier_allocator_cvc_0
-  id: digital_ofdm_carrier_allocator_cvc
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    fft_len: fft_len
-    len_tag_key: '"packet_len"'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    occupied_carriers: ''
-    output_is_shifted: 'True'
-    pilot_carriers: ((),)
-    pilot_symbols: ((),)
-    sync_words: ((),)
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [896, 480.0]
-    rotation: 0
-    state: true
 - name: digital_ofdm_mod_0
   id: digital_ofdm_mod
   parameters:
@@ -237,52 +234,24 @@ blocks:
     cp_len: '16'
     fft_len: '64'
     header_mod: '"BPSK"'
-    log: 'True'
+    log: 'False'
     maxoutbuf: '0'
     minoutbuf: '0'
-    occupied_carriers: ()
+    occupied_carriers: ((-4,-3,-2,-1,1,2,3,4),)
     packet_len_key: length
     payload_mod: '"BPSK"'
-    pilot_carriers: ()
-    pilot_symbols: ()
+    pilot_carriers: ((-6,-5,5,6),)
+    pilot_symbols: ((-1,1,-1,1),)
     rolloff: '0'
     scramble_bits: 'False'
-    sync_word1: ()
-    sync_word2: ()
+    sync_word1: None
+    sync_word2: None
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
     coordinate: [368, 396.0]
     rotation: 180
-    state: true
-- name: digital_ofdm_tx_1
-  id: digital_ofdm_tx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    cp_len: '16'
-    fft_len: '64'
-    header_mod: '"BPSK"'
-    log: 'False'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    occupied_carriers: ()
-    packet_len_key: length
-    payload_mod: '"BPSK"'
-    pilot_carriers: ()
-    pilot_symbols: ()
-    rolloff: '0'
-    scramble_bits: 'False'
-    sync_word1: ()
-    sync_word2: ()
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1128, 360.0]
-    rotation: 0
     state: true
 - name: qtgui_freq_sink_x_0
   id: qtgui_freq_sink_x
@@ -399,10 +368,13 @@ blocks:
 
 connections:
 - [analog_random_source_x_0, '0', blocks_throttle_0, '0']
+- [blocks_add_xx_0, '0', blocks_delay_0, '0']
 - [blocks_delay_0, '0', blocks_short_to_char_0, '0']
-- [blocks_short_to_char_0, '0', digital_ofdm_mod_0, '0']
-- [blocks_short_to_char_0, '0', digital_ofdm_tx_0, '0']
-- [blocks_throttle_0, '0', digital_ofdm_tx_0, '0']
+- [blocks_multiply_const_vxx_0, '0', blocks_add_xx_0, '1']
+- [blocks_short_to_char_0, '0', blocks_stream_to_tagged_stream_0, '0']
+- [blocks_stream_to_tagged_stream_0, '0', digital_ofdm_tx_0, '0']
+- [blocks_throttle_0, '0', blocks_add_xx_0, '0']
+- [blocks_throttle_0, '0', blocks_multiply_const_vxx_0, '0']
 - [digital_ofdm_mod_0, '0', wxgui_fftsink2_0, '0']
 - [digital_ofdm_tx_0, '0', qtgui_freq_sink_x_0, '0']
 
