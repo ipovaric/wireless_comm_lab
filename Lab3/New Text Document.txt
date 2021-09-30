@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# hexdump input file
+hexdump sent_symbols.bin -v -e '1/1 "%02X\n"' > in.txt
+# clip the last ## lines of in.txt
+sed -i "$(( $(wc -l <in.txt)-20)),$ d" in.txt
+# Note: clip first 46 lines from out.txt
+hexdump recieved_symbols.bin -v -s 46 -e '1/1 "%02X\n"' > out.txt
+sdiff in.txt out.txt > diff.txt
+grep -o '<\|>\||' diff.txt | wc -l
+
+echo $(( $(grep -o '<\|>\||' diff.txt | wc -l)/$(wc -l <diff.txt)))
+# print truncatechmodd outputs
+echo " Top of diff.txt:"
+head -10 diff.txt
+echo ""
+echo "Bottom of diff.txt:"
+tail -10 diff.txt
