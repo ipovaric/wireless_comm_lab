@@ -1,3 +1,11 @@
-*.rx_dat.txt
-*.sent_data.txt
-*.top_block.py
+*rx_dat.txt
+*sent_data.txt
+*top_block.py
+
+Lab3/in.txt
+Lab3\out.txt
+Lab3\diff.txt
+Lab3\sent_symbols.bin
+Lab3\sent_bytes.bin
+Lab3\recieved_symbols.bin
+Lab3\recieved_bytes.bin
