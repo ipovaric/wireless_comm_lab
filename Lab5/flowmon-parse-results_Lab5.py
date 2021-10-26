@@ -199,11 +199,12 @@ def main(argv):
                 print("\tPacket Loss Ratio: None")
             else:
                 print("\tPacket Loss Ratio: %.2f %%" % (flow.packetLossRatio*100))
+            print("\tHop Count: %.0f" % (flow.hopCount))
             
             print()
             print("Default Parameters----")
             timeFirstTxPacket = flow.timeFirstTxPacket * 1e-9
-            print(f"timeFirstTxPacket: {timeFirstTxPacket:.2f} s")
+            print(f'timeFirstTxPacket: {timeFirstTxPacket:.2f}')
             timeLastTxPacket = flow.timeLastTxPacket * 1e-9
             print(f"timeLastTxPacket: {timeLastTxPacket:.2f} s")
             timeFirstRxPacket = flow.timeFirstRxPacket * 1e-9
@@ -211,16 +212,11 @@ def main(argv):
             timeLastRxPacket = flow.timeLastRxPacket * 1e-9
             print(f"timeLastRxPacket: {timeLastRxPacket:.2f} s")
             print(f"txBytes: {flow.txBytes}")
-            print(f"txPackets: {flow.txPackets}")
+            print(f"txPackets: {flow.txPackets:.0f}")
             print(f"rxBytes: {flow.rxBytes}")
-            print(f"rxPackets: {flow.rxPackets}")
-            print(f"lostPackets: {flow.lostPackets}")
-            print(f"timesForwarded: {flow.timesForwarded}")
-            # my dataframe
-            # data = [flow.timeFirstTxPacket,flow.timeLastTxPacket,flow.timeFirstRxPacket,
-            #         flow.timeLastRxPacket,flow.txBytes,flow.txPackets,flow.rxBytes,
-                    # flow.rxPackets,flow.lostPackets,flow.timesForwarded]
-            # df = pd.DataFrame(data,index=idx)
+            print(f"rxPackets: {flow.rxPackets:.0f}")
+            print(f"lostPackets: {flow.lostPackets:.0f}")
+            print(f"timesForwarded: {flow.timesForwarded:.0f}")
             
     
 if __name__ == '__main__':
