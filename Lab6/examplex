@@ -1,0 +1,3 @@
+std::stringstream stream
+stream << std::hex << 20
+std:string result( stream.str() )
