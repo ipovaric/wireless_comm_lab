@@ -21,18 +21,22 @@
 #ifndef INCLUDED_DEMO_PKT_RECEIVER_IMPL_H
 #define INCLUDED_DEMO_PKT_RECEIVER_IMPL_H
 
-#include <demo/pkt_receiver.h>
+#include <L6_receiver/pkt_receiver.h>
 
 namespace gr {
-  namespace demo {
+  namespace L6_receiver {
 
     class pkt_receiver_impl : public pkt_receiver
     {
      private:
+      int payload_size;
+      int flow_id;
 
      public:
-      pkt_receiver_impl();
+      pkt_receiver_impl(int payload_size, int flow_id);
       ~pkt_receiver_impl();
+      int _payload_size;
+      int _flow_id;
 
       // Where all the action really happens
       void forecast (int noutput_items, gr_vector_int &ninput_items_required);
@@ -43,7 +47,8 @@ namespace gr {
 		       gr_vector_void_star &output_items);
     };
 
-  } // namespace demo
+  } // namespace L6_receiver
 } // namespace gr
 
-#endif /* INCLUDED_DEMO_PKT_FRAMER_IMPL_H */
+#endif /* INCLUDED_DEMO_PKT_RECEIVER_IMPL_H */
+

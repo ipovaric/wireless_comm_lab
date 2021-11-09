@@ -26,25 +26,29 @@
 #include <gnuradio/io_signature.h>
 #include "pkt_receiver_impl.h"
 #include <iostream>
+#include <bitset>
 
 namespace gr {
-  namespace demo {
+  namespace L6_receiver {
 
     pkt_receiver::sptr
-    pkt_receiver::make()
+    pkt_receiver::make(int payload_size, int flow_id)
     {
       return gnuradio::get_initial_sptr
-        (new pkt_receiver_impl());
+        (new pkt_receiver_impl(payload_size,flow_id));
     }
 
     /*
      * The private constructor
      */
-    pkt_receiver_impl::pkt_receiver_impl()
+    pkt_receiver_impl::pkt_receiver_impl(int payload_size,int flow_id)
       : gr::block("pkt_receiver",
               gr::io_signature::make(1, 1, sizeof(char)),
               gr::io_signature::make(1, 1, sizeof(char)))
     {
+      _payload_size = payload_size;
+      _flow_id = flow_id;
+
     }
 
     /*
@@ -57,10 +61,10 @@ namespace gr {
     void
     pkt_receiver_impl::forecast (int noutput_items, gr_vector_int &ninput_items_required)
     {
-	// payload + 6 bytes header = output
-        ninput_items_required[0] = noutput_items;
-	//using namespace std;
-	std::cout << "ninput_items_required " << ninput_items_required[0]  << std::endl;
+        ninput_items_required[0] = noutput_items*2;
+	using namespace std;
+	cout << "receive:noutput_items " << noutput_items << endl;
+	cout << "receive:ninput_items_required " << ninput_items_required[0]  << endl;
     }
 
     int
@@ -76,60 +80,97 @@ namespace gr {
         // Do <+signal processing+>
         // Tell runtime system how many input items we consumed on
         // each input stream.
-        cout << "rec:noutput_items = " << noutput_items << endl;
 	for(int i = 0; i < noutput_items; i++)
 	{
-		cout << "item" << i << ": " << in[i] << endl;
-		// Adding header
+	    cout << "Count: " << i << endl;
 
-		/*if in[i] =
-		// Preamble
-		*out = 0x03;
-		int b0 = *out;
-		out++;
-		*out = 0x07;
-		int b1 = *out;
-		out++;
+	    // For each iteration, pick out four 4-bit items to search for preamble
+	    std::bitset<8> xA(in[i]);
+	    std::bitset<8> xB(in[i+1]);
+	    std::bitset<8> xC(in[i+2]);
+	    std::bitset<8> xD(in[i+3]);
+	    cout << "itemA" << i << ": " << xA << endl;
+	    cout << "itemB" << i << ": " << xB << endl;
+	    cout << "itemC" << i << ": " << xC << endl;
+	    cout << "itemD" << i << ": " << xD << endl;
 
-		// Flow id (configurable by user)
-		*out = _flow_id;
-		int b2 = *out;
-		out++;
+	    // if the preamble is correct...do stuff
+	    if (xA == 0x03 && xB == 0x07 && xC == 0x08 && xD == 0x09){
+            cout << "Preamble 0x3789 found...extracting stream." <<  endl;
 
-		// Packet Size (configurable by user)
-		*out = _payload_size;
-		int b3 = *out;
-		out++;
+            // Write preamble to output stream and make variables for checksum
+            *out = in[i];
+            int b0 = xA.to_ulong();
+            out++;
+            *out = in[i+1];
+            int b1 = xB.to_ulong();
+            out++;
+            *out = in[i+2];
+            int b2 = xC.to_ulong();
+            out++;
+            *out = in[i+3];
+            int b3 = xD.to_ulong();
+            out++;
 
-		int sz = 0; // size of user data
-		// User data
-		for(int i = 0; i < _payload_size; i++,out++,in++)
-		{
-			*out = *in;
-			sz += int(*out);
-		}
-		cout << "Byte0= " << b0 << endl;
-		cout << "Byte1= " << b1 << endl;
-		cout << "Byte2= " << b2 << endl;
-		cout << "Byte3= " << b3 << endl;
-		cout << "UserDataSize= " << sz << endl;
+            // merge bytes
+            uint8_t b01 = in[i] | in[i+1];
+            cout << "bits01: " << b01 << endl;
 
-		// CRC Checksum
-		int checksum = b0 + b1 + b2 + b3 + sz;
-		*out = checksum;
-		cout << "checksum= " << checksum << endl;
-		out++;
+            // get flow id and payload size from packet
+            //  skipping idx 4 and 6 b/c of extra zero items due to encoding of int types
+            std::bitset<8> flow_id_bit(in[i+5]);
+            int flow_id = flow_id_bit.to_ulong();
+            std::bitset<8> payload_bit(in[i+7]);
+            int payload = payload_bit.to_ulong();
 
-		// sheild bit
-		*out = 0x00;
-		out++;*/
+//            cout << "flow_id_in: " << _flow_id << endl;
+//            cout << "flow_id_stream: " << flow_id.to_ulong() << endl;
 
-		consume_each(noutput_items);
+            // Check that flow id byte matches the input variable
+            if (flow_id == _flow_id){
+                cout << "Flow ID Matched:" << flow_id << endl;
+                cout << "Payload Size: " << payload << endl;
+
+                // write flow id and payload size to output
+                *out = in[i+5]; // flow_id
+                out++;
+                *out = in[i+7]; // payload
+                out++;
+
+                // If all matched, write the data
+                cout << "Writing Data to Stream..." << endl;
+                int offset = 8; // offset due to preamble
+                int datasum = 0;
+                for(int j=i+offset; j < payload+i+offset; j++,out++){
+                    *out = in[j];
+                    std::bitset<8> data_bit(in[j]);
+                    int data = data_bit.to_ulong();
+                    cout << data_bit << ": " << data << endl;
+
+                    // calc sum for checksum
+                    datasum += data;
+                }
+
+                // compare checksums
+                int sum = b0+b1+b2+b3+flow_id+payload+datasum;
+                cout << "Calc Sum: " << sum << endl;
+                int chk_byte = in[payload+i+offset+1];
+                cout << "Sum from pkt: " << chk_byte << endl;
+                if (sum == chk_byte){
+                    cout << "Checksums Matched!" << endl;
+                } else {
+                    cout << "Warning: Checksums not Matched!" << endl;
+                }
+
+            }
+
+	    }
+		consume(0,int(noutput_items));
 
 	}
 
         // Tell runtime system how many output items we produced.
-	cout << "rec:packet complete" << endl;
+	cout << "packet processed" << endl;
         return noutput_items;
     }
 

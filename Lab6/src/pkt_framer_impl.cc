@@ -61,10 +61,12 @@ namespace gr {
     pkt_framer_impl::forecast (int noutput_items, gr_vector_int &ninput_items_required)
     {
 	// payload + 6 bytes header = output
+
         ninput_items_required[0] = (noutput_items/_payload_size+1)*(_payload_size - 6);
-	//using namespace std;
-	std::cout << "noutput_items " << noutput_items << std::endl;
-	std::cout << "ninput_items_required " << ninput_items_required[0]  << std::endl;
+	using namespace std;
+	cout << "forecasting..." << endl;
+	cout << "noutput_items " << noutput_items << endl;
+	cout << "ninput_items_required " << ninput_items_required[0]  << endl;
     }
 
     int
@@ -87,47 +89,41 @@ namespace gr {
 		//cout << "noutput_items/_payload_size = " << i << endl;
 		// Adding header
 
-		// Preamble
-		*out = 0x37;
+		// Fixed Preamble
+        // 0011 0111 1000 1001
+        // *out = 0x3789;
+        cout << "Preamble -----" << endl;
+        *out = 0x37;
 		int b01 = *out;
+		cout << "bits01: " << b01 << endl;
 		out++;
-//		*out = 0x07;
-//		int b1 = *out;
-//		out++;
+		*out = 0x89;
+		int b23 = *out;
+		out++;
 
 		// Flow id (configurable by user)
 		*out = _flow_id;
-		int b2 = *out;
+		int b4 = *out;
 		out++;
 
 		// Packet Size (configurable by user)
 		*out = _payload_size;
-		int b3 = *out;
+		int b5 = *out;
 		out++;
 
-		int sz = 0; // size of user data
+		int sum = 0; // sum of user data
 		// User data
+		cout << "User Data -----" << endl;
 		for(int i = 0; i < _payload_size; i++,out++,in++)
 		{
 			*out = *in;
-			sz += int(*out);
+			sum += int(*out);
+			cout << "data: " << int(*out) << endl;
 		}
-		/*
-		cout << "Byte0= " << b0 << endl;
-		cout << "Byte1= " << b1 << endl;
-		cout << "Byte2= " << b2 << endl;
-		cout << "Byte3= " << b3 << endl;
-		cout << "UserDataSize= " << sz << endl;
-		*/
 
 		// CRC Checksum
-		int checksum = b01 + b2 + b3 + sz;
+		int checksum = b01 + b23 + b4 + b5 + sum;
 		*out = checksum;
-		//cout << "checksum= " << checksum << endl;
-		out++;
-
-		// sheild bit
-		*out = 0x00;
 		out++;
 
 		consume(0,int(_payload_size));

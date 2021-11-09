@@ -44,6 +44,18 @@ blocks:
     coordinate: [976, 84.0]
     rotation: 0
     state: enabled
+- name: packing
+  id: variable
+  parameters:
+    comment: ''
+    value: '2'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [384, 12.0]
+    rotation: 0
+    state: enabled
 - name: payload_size
   id: variable
   parameters:
@@ -153,7 +165,7 @@ blocks:
     alias: ''
     append: 'False'
     comment: ''
-    file: received.txt
+    file: received2.txt
     type: byte
     unbuffered: 'False'
     vlen: '1'
@@ -161,7 +173,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [448, 324.0]
+    coordinate: [528, 324.0]
     rotation: 0
     state: enabled
 - name: blocks_float_to_char_0
@@ -189,16 +201,32 @@ blocks:
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    num_items: samp_rate*5
+    num_items: samp_rate*3
     type: byte
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [904, 252.0]
+    coordinate: [368, 340.0]
     rotation: 0
-    state: disabled
+    state: enabled
+- name: blocks_pack_k_bits_bb_0
+  id: blocks_pack_k_bits_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    k: packing
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [400, 252.0]
+    rotation: 0
+    state: true
 - name: blocks_skiphead_0
   id: blocks_skiphead
   parameters:
@@ -233,9 +261,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [72, 340.0]
+    coordinate: [824, 252.0]
     rotation: 0
-    state: true
+    state: disabled
 - name: demo2_pkt_receiver_0
   id: demo2_pkt_receiver
   parameters:
@@ -265,15 +293,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [232, 332.0]
+    coordinate: [240, 244.0]
     rotation: 0
     state: true
 
 connections:
 - [analog_const_source_x_0, '0', blocks_float_to_char_0, '0']
-- [blocks_float_to_char_0, '0', blocks_throttle_0, '0']
-- [blocks_throttle_0, '0', demo_pkt_framer_0, '0']
-- [demo_pkt_framer_0, '0', blocks_file_sink_1_0, '0']
+- [blocks_float_to_char_0, '0', demo_pkt_framer_0, '0']
+- [blocks_head_0, '0', blocks_file_sink_1_0, '0']
+- [blocks_pack_k_bits_bb_0, '0', blocks_head_0, '0']
+- [demo_pkt_framer_0, '0', blocks_pack_k_bits_bb_0, '0']
 
 metadata:
   file_format: 1
