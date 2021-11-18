@@ -64,9 +64,9 @@ namespace gr {
 
         ninput_items_required[0] = (noutput_items/_payload_size+1)*(_payload_size - 6);
 	using namespace std;
-	cout << "forecasting..." << endl;
-	cout << "noutput_items " << noutput_items << endl;
-	cout << "ninput_items_required " << ninput_items_required[0]  << endl;
+//	cout << "forecasting..." << endl;
+//	cout << "noutput_items " << noutput_items << endl;
+//	cout << "ninput_items_required " << ninput_items_required[0]  << endl;
     }
 
     int
@@ -84,21 +84,23 @@ namespace gr {
         // each input stream.
 	for(int i = noutput_items/_payload_size; i > 0; i--)
 	{
-		//cout << "noutput_items = " << noutput_items << endl;
-		//cout << "payload_size = " << _payload_size << endl;
-		//cout << "noutput_items/_payload_size = " << i << endl;
+
+//		cout << "noutput_items = " << noutput_items << endl;
+//		cout << "noutput_items/_payload_size = " << i << endl;
 		// Adding header
 
 		// Fixed Preamble
         // 0011 0111 1000 1001
         // *out = 0x3789;
-        cout << "Preamble -----" << endl;
+//        cout << "Packet: " << i << endl;
+//        cout << "Sending Preamble -----" << endl;
         *out = 0x37;
-		int b01 = *out;
-		cout << "bits01: " << b01 << endl;
+		int b01 = 55;
+//		cout << "bits01: " << b01 << endl;
 		out++;
 		*out = 0x89;
-		int b23 = *out;
+		int b23 = 137;
+//		cout << "bits23: " << b23 << endl;
 		out++;
 
 		// Flow id (configurable by user)
@@ -109,31 +111,40 @@ namespace gr {
 		// Packet Size (configurable by user)
 		*out = _payload_size;
 		int b5 = *out;
+//		cout << "payload: " << b5 << endl;
 		out++;
 
 		int sum = 0; // sum of user data
 		// User data
-		cout << "User Data -----" << endl;
+//		cout << "Sending User Data -----" << endl;
 		for(int i = 0; i < _payload_size; i++,out++,in++)
 		{
 			*out = *in;
-			sum += int(*out);
-			cout << "data: " << int(*out) << endl;
+			int data = *in;
+			sum = sum + data;
+//			cout << "sum: " << sum << endl;
+
 		}
 
-		// CRC Checksum
-		int checksum = b01 + b23 + b4 + b5 + sum;
+		// Simple 8bit Checksum
+		// Modulo 152 is used b/c the max value encoded into char is 152
+		int checksum = (b01 + b23 + b4 + b5 + sum) % 152; // calc
 		*out = checksum;
 		out++;
 
+        //		cout << "checksum: " << checksum << endl;
 		consume(0,int(_payload_size));
+
 
 	}
 
-        // Tell runtime system how many output items we produced.
+    // Tell runtime system how many output items we produced.
 	noutput_items = (noutput_items/_payload_size)*(_payload_size + 6);
-	cout << "noutput_items" << noutput_items << endl;
-	cout << "packet complete" << endl;
+//    if (noutput_items > 10000){
+//        exit();
+//    }
+//	cout << "noutput_items" << noutput_items << endl;
+	cout << "Transmit packet complete" << endl;
         return noutput_items;
     }
 

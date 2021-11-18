@@ -61,10 +61,10 @@ namespace gr {
     void
     pkt_receiver_impl::forecast (int noutput_items, gr_vector_int &ninput_items_required)
     {
-        ninput_items_required[0] = noutput_items*2;
+        ninput_items_required[0] = noutput_items;
 	using namespace std;
-	cout << "receive:noutput_items " << noutput_items << endl;
-	cout << "receive:ninput_items_required " << ninput_items_required[0]  << endl;
+//	cout << "receive:noutput_items " << noutput_items << endl;
+//	cout << "receive:ninput_items_required " << ninput_items_required[0]  << endl;
     }
 
     int
@@ -74,103 +74,149 @@ namespace gr {
                        gr_vector_void_star &output_items)
     {
 	using namespace std;
-        const char *in = (const char *) input_items[0];
-        char *out = (char *) output_items[0];
+    const char *in = (const char *) input_items[0];
+    char *out = (char *) output_items[0];
 
-        // Do <+signal processing+>
-        // Tell runtime system how many input items we consumed on
-        // each input stream.
+    // Main signal processing
+    int pkt_cnt = 0; // packet counter
+    cout << "Searching Index..." << endl;
 	for(int i = 0; i < noutput_items; i++)
 	{
-	    cout << "Count: " << i << endl;
+        using namespace std;
 
-	    // For each iteration, pick out four 4-bit items to search for preamble
-	    std::bitset<8> xA(in[i]);
-	    std::bitset<8> xB(in[i+1]);
-	    std::bitset<8> xC(in[i+2]);
-	    std::bitset<8> xD(in[i+3]);
-	    cout << "itemA" << i << ": " << xA << endl;
-	    cout << "itemB" << i << ": " << xB << endl;
-	    cout << "itemC" << i << ": " << xC << endl;
-	    cout << "itemD" << i << ": " << xD << endl;
+        vector<string> pream_chk (4); // preamble checker container
+        vector<string> pream_valid {"0011","0111","1000","1001"}; // valid preamble
+        bool flow_id_valid;
+        bool valid_stream = false; // will be true if preamble is found
 
-	    // if the preamble is correct...do stuff
-	    if (xA == 0x03 && xB == 0x07 && xC == 0x08 && xD == 0x09){
-            cout << "Preamble 0x3789 found...extracting stream." <<  endl;
+        // Extract four bytes of data to look for preamble
+        for(int j = 0; j < 4; j++){
+            int x0(*in); in++;
+            int x1(*in); in++;
+            int x2(*in); in++;
+            int x3(*in); in++;
+            pream_chk[j] = to_string(x0)+to_string(x1)+to_string(x2)+to_string(x3);
+        }
 
-            // Write preamble to output stream and make variables for checksum
-            *out = in[i];
-            int b0 = xA.to_ulong();
-            out++;
-            *out = in[i+1];
-            int b1 = xB.to_ulong();
-            out++;
-            *out = in[i+2];
-            int b2 = xC.to_ulong();
-            out++;
-            *out = in[i+3];
-            int b3 = xD.to_ulong();
-            out++;
+        int fid_num;
+	    if (pream_chk == pream_valid){
+            cout << endl;
+            cout << "***************************" << endl;
+            cout << "Index: " << i << endl;
+            cout << "Preamble Matched!! <<<<---" << endl;
+            cout << "***************************" << endl;
 
-            // merge bytes
-            uint8_t b01 = in[i] | in[i+1];
-            cout << "bits01: " << b01 << endl;
+            // extract flow_id
+            in = in + 4; // skip blank bytes
+            int x0(*in); in++;
+            int x1(*in); in++;
+            int x2(*in); in++;
+            int x3(*in); in++;
+            bitset<4> fid_data(to_string(x0)+to_string(x1)+to_string(x2)+to_string(x3));
+            fid_num = fid_data.to_ulong();
+            cout << "Flow ID: " << fid_num << " ";
 
-            // get flow id and payload size from packet
-            //  skipping idx 4 and 6 b/c of extra zero items due to encoding of int types
-            std::bitset<8> flow_id_bit(in[i+5]);
-            int flow_id = flow_id_bit.to_ulong();
-            std::bitset<8> payload_bit(in[i+7]);
-            int payload = payload_bit.to_ulong();
+            // compare flow id and output if correct
+            if(fid_num==_flow_id){
+                cout << "Flow ID Matched!" << endl;
 
-//            cout << "flow_id_in: " << _flow_id << endl;
-//            cout << "flow_id_stream: " << flow_id.to_ulong() << endl;
-
-            // Check that flow id byte matches the input variable
-            if (flow_id == _flow_id){
-                cout << "Flow ID Matched:" << flow_id << endl;
-                cout << "Payload Size: " << payload << endl;
-
-                // write flow id and payload size to output
-                *out = in[i+5]; // flow_id
+                // output preamble bytes
+                *out = 0x37;
                 out++;
-                *out = in[i+7]; // payload
+                *out = 0x89;
                 out++;
 
-                // If all matched, write the data
-                cout << "Writing Data to Stream..." << endl;
-                int offset = 8; // offset due to preamble
-                int datasum = 0;
-                for(int j=i+offset; j < payload+i+offset; j++,out++){
-                    *out = in[j];
-                    std::bitset<8> data_bit(in[j]);
-                    int data = data_bit.to_ulong();
-                    cout << data_bit << ": " << data << endl;
+                // output flow id bytes
+//                *out = 0x00; // blank byte
+//                out++;
+                *out = fid_num;
+                out++;
 
-                    // calc sum for checksum
-                    datasum += data;
-                }
-
-                // compare checksums
-                int sum = b0+b1+b2+b3+flow_id+payload+datasum;
-                cout << "Calc Sum: " << sum << endl;
-                int chk_byte = in[payload+i+offset+1];
-                cout << "Sum from pkt: " << chk_byte << endl;
-                if (sum == chk_byte){
-                    cout << "Checksums Matched!" << endl;
-                } else {
-                    cout << "Warning: Checksums not Matched!" << endl;
-                }
+                pkt_cnt++; // increment packet count
+                valid_stream = true; // only true if both preamble and flow id are matched
 
             }
 
-	    }
+        } else {
+            in = in - 15; // go back to just after the first index
+        }
+
+        // if the preamble is found and flow id is matched, do this stuff
+        if(valid_stream) {
+            // extract payload_size
+            in = in + 4; // skip blank bytes
+            int x0(*in); in++;
+            int x1(*in); in++;
+            int x2(*in); in++;
+            int x3(*in); in++;
+            bitset<4> pyld_data(to_string(x0)+to_string(x1)+to_string(x2)+to_string(x3));
+
+            // output payload_size
+            *out = pyld_data.to_ulong();
+            out++;
+
+            // extract and output user data (8 bits)*payload_size
+            int user_sum = 0;
+            for (int j = 0; j < _payload_size; j++){
+                int x0(*in); in++;
+                int x1(*in); in++;
+                int x2(*in); in++;
+                int x3(*in); in++;
+                int x4(*in); in++;
+                int x5(*in); in++;
+                int x6(*in); in++;
+                int x7(*in); in++;
+                bitset<8> user_data(to_string(x0)+to_string(x1)+to_string(x2)+to_string(x3)+to_string(x4)+to_string(x5)+to_string(x6)+to_string(x7));
+
+                *out = user_data.to_ulong();
+                out++;
+
+                cout << "User Data" << j << ": " << user_data.to_ulong() << endl;
+
+                user_sum = user_sum + user_data.to_ulong(); // for checksum
+            }
+
+            // extract checksum data (8bits)
+            int x4(*in); in++;
+            int x5(*in); in++;
+            int x6(*in); in++;
+            int x7(*in); in++;
+            int x8(*in); in++;
+            int x9(*in); in++;
+            int x10(*in); in++;
+            int x11(*in); in++;
+            bitset<8> chksum_data(to_string(x4)+to_string(x5)+to_string(x6)+to_string(x7)+to_string(x8)+to_string(x9)+to_string(x10)+to_string(x11));
+            cout << "checksum_data: " << chksum_data.to_ulong() << endl;
+
+            // checksum calculation
+            // preamble+flow_id+payload_size+user_data
+            int chksum_calc = (192 + fid_num + pyld_data.to_ulong() + user_sum) % 152;
+            cout << "checksum_calc: " << chksum_calc << endl;
+            if(chksum_data == chksum_calc){
+                cout << "Checksums Matched!!" << endl;
+            } else {
+                cout << "Warning: Checksums NOT Matched!!" << endl;
+            }
+
+            *out = chksum_calc;
+            out++;
+
+            // Break included to stop reading when zero data is read
+            if(user_sum == 0 && valid_stream){
+                break;
+            }
+
+        // Break included to keep output from running away and getting stuck
+        if(i > 1000){
+            break;
+        }
+        }
 		consume(0,int(noutput_items));
 
 	}
 
         // Tell runtime system how many output items we produced.
-	cout << "packet processed" << endl;
+	cout << endl << "Total of " << pkt_cnt << " Packets Processed." << endl;
         return noutput_items;
     }
 

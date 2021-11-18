@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: Lab6Test3
+# Title: Lab6TestModulate
 # GNU Radio version: v3.10.0.0git-520-g4d0f2900
 
 from distutils.version import StrictVersion
@@ -25,7 +25,7 @@ from gnuradio import qtgui
 from gnuradio.filter import firdes
 import sip
 from gnuradio import blocks
-import numpy
+import pmt
 from gnuradio import gr
 from gnuradio.fft import window
 import sys
@@ -33,18 +33,18 @@ import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-import demo
+import L6_receiver
 
 
 
 from gnuradio import qtgui
 
-class Lab6Test2(gr.top_block, Qt.QWidget):
+class Lab6TestModulate(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Lab6Test3", catch_exceptions=True)
+        gr.top_block.__init__(self, "Lab6TestModulate", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Lab6Test3")
+        self.setWindowTitle("Lab6TestModulate")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -62,7 +62,7 @@ class Lab6Test2(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "Lab6Test2")
+        self.settings = Qt.QSettings("GNU Radio", "Lab6TestModulate")
 
         try:
             if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
@@ -75,10 +75,11 @@ class Lab6Test2(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 100
-        self.payload_size = payload_size = 1000
-        self.packing = packing = 2
-        self.flow_id = flow_id = 1
+        self.samp_rate = samp_rate = 500
+        self.payload_size = payload_size = 10
+        self.packing = packing = 4
+        self.flow_id = flow_id = 2
+        self.constellation = constellation = 2
 
         ##################################################
         # Blocks
@@ -135,27 +136,28 @@ class Lab6Test2(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(1, 6):
             self.top_grid_layout.setColumnStretch(c, 1)
-        self.demo_pkt_framer_0 = demo.pkt_framer(payload_size, flow_id)
         self.blocks_throttle_0 = blocks.throttle(gr.sizeof_char*1, samp_rate,True)
-        self.blocks_file_sink_1_0_0 = blocks.file_sink(gr.sizeof_char*1, 'sent.txt', False)
-        self.blocks_file_sink_1_0_0.set_unbuffered(False)
+        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_char*1, 'received_unpkt.txt', False, 0, 0)
+        self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
+        self.blocks_file_sink_1_0_1_0 = blocks.file_sink(gr.sizeof_char*1, 'received_after.txt', False)
+        self.blocks_file_sink_1_0_1_0.set_unbuffered(False)
         self.blocks_char_to_float_0 = blocks.char_to_float(1, 1)
-        self.analog_random_source_x_0_0 = blocks.vector_source_b(list(map(int, numpy.random.randint(20, 22, 100))), False)
+        self.L6_receiver_pkt_receiver_0 = L6_receiver.pkt_receiver(payload_size, flow_id)
 
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_random_source_x_0_0, 0), (self.blocks_throttle_0, 0))
+        self.connect((self.L6_receiver_pkt_receiver_0, 0), (self.blocks_char_to_float_0, 0))
+        self.connect((self.L6_receiver_pkt_receiver_0, 0), (self.blocks_file_sink_1_0_1_0, 0))
         self.connect((self.blocks_char_to_float_0, 0), (self.qtgui_time_sink_x_0, 0))
-        self.connect((self.blocks_throttle_0, 0), (self.demo_pkt_framer_0, 0))
-        self.connect((self.demo_pkt_framer_0, 0), (self.blocks_char_to_float_0, 0))
-        self.connect((self.demo_pkt_framer_0, 0), (self.blocks_file_sink_1_0_0, 0))
+        self.connect((self.blocks_file_source_0, 0), (self.blocks_throttle_0, 0))
+        self.connect((self.blocks_throttle_0, 0), (self.L6_receiver_pkt_receiver_0, 0))
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "Lab6Test2")
+        self.settings = Qt.QSettings("GNU Radio", "Lab6TestModulate")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -188,10 +190,16 @@ class Lab6Test2(gr.top_block, Qt.QWidget):
     def set_flow_id(self, flow_id):
         self.flow_id = flow_id
 
+    def get_constellation(self):
+        return self.constellation
+
+    def set_constellation(self, constellation):
+        self.constellation = constellation
 
 
 
-def main(top_block_cls=Lab6Test2, options=None):
+
+def main(top_block_cls=Lab6TestModulate, options=None):
 
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
         style = gr.prefs().get_string('qtgui', 'style', 'raster')
