@@ -50,9 +50,21 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1344, 292.0]
+    coordinate: [1344, 276.0]
     rotation: 0
     state: enabled
+- name: a1
+  id: variable
+  parameters:
+    comment: ''
+    value: '0.5'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1376, 36.0]
+    rotation: 0
+    state: disabled
 - name: a2
   id: variable_qtgui_range
   parameters:
@@ -71,26 +83,59 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1344, 428.0]
+    coordinate: [1344, 412.0]
     rotation: 0
     state: enabled
-- name: encoding
+- name: a2
   id: variable
   parameters:
     comment: ''
-    value: '3'
+    value: '0.5'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1192, 116.0]
+    coordinate: [1376, 108.0]
+    rotation: 0
+    state: disabled
+- name: epsilon
+  id: variable
+  parameters:
+    comment: ''
+    value: '0.0005'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1376, 172.0]
+    rotation: 0
+    state: disabled
+- name: epsilon
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: 4,1,1,1
+    label: ''
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: -.001
+    step: '0.0001'
+    stop: '.001'
+    value: '0'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1344, 548.0]
     rotation: 0
     state: enabled
 - name: filename
   id: variable
   parameters:
     comment: ''
-    value: ' "results/sim_%d_%.3f_%.1f_.pcap" % (repetition, foffset, snr)'
+    value: ' "results/sim_%d_%d_%.1f_.pcap" % (repetition, encoding, snr)'
   states:
     bus_sink: false
     bus_source: false
@@ -102,7 +147,7 @@ blocks:
   id: variable_qtgui_range
   parameters:
     comment: ''
-    gui_hint: 2,1,1,1
+    gui_hint: 4,0,1,1
     label: FreqOffset
     min_len: '200'
     orient: QtCore.Qt.Horizontal
@@ -116,14 +161,26 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [704, 12.0]
+    coordinate: [1224, 508.0]
+    rotation: 0
+    state: enabled
+- name: foffset
+  id: variable
+  parameters:
+    comment: ''
+    value: '0.03'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1232, 100.0]
     rotation: 0
     state: disabled
 - name: noise
   id: variable_qtgui_range
   parameters:
     comment: ''
-    gui_hint: 3,1,1,1
+    gui_hint: 3,0,1,1
     label: ''
     min_len: '200'
     orient: QtCore.Qt.Horizontal
@@ -137,9 +194,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1216, 292.0]
+    coordinate: [1224, 388.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: noise
   id: variable
   parameters:
@@ -149,9 +206,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1192, 188.0]
+    coordinate: [1232, 36.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: out_buf_size
   id: variable
   parameters:
@@ -173,7 +230,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1296, 132.0]
+    coordinate: [8, 324.0]
     rotation: 0
     state: enabled
 - name: snr
@@ -194,7 +251,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [576, 12.0]
+    coordinate: [1216, 276.0]
     rotation: 0
     state: enabled
 - name: blocks_file_sink_0_0
@@ -257,7 +314,7 @@ blocks:
     alias: ''
     block_tags: 'False'
     comment: ''
-    epsilon: '1.00'
+    epsilon: 1.00+epsilon
     freq_offset: foffset
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -268,9 +325,30 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [880, 540.0]
+    coordinate: [952, 524.0]
     rotation: 0
     state: enabled
+- name: channels_channel_model_0_0_0
+  id: channels_channel_model
+  parameters:
+    affinity: ''
+    alias: ''
+    block_tags: 'False'
+    comment: ''
+    epsilon: '1.0'
+    freq_offset: foffset
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_voltage: noise
+    seed: '0'
+    taps: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [952, 644.0]
+    rotation: 0
+    state: disabled
 - name: encoding
   id: parameter
   parameters:
@@ -287,24 +365,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1192, 20.0]
-    rotation: 0
-    state: disabled
-- name: foffset
-  id: parameter
-  parameters:
-    alias: ''
-    comment: ''
-    hide: none
-    label: ''
-    short_id: e
-    type: eng_float
-    value: '0.01'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [824, 12.0]
+    coordinate: [776, 20.0]
     rotation: 0
     state: enabled
 - name: foo_packet_pad2_0
@@ -423,7 +484,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [304, 12.0]
+    coordinate: [288, 12.0]
     rotation: 0
     state: enabled
 - name: pdu_pdu_to_tagged_stream_0
@@ -457,7 +518,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1296, 20.0]
+    coordinate: [480, 20.0]
     rotation: 0
     state: enabled
 - name: qtgui_const_sink_x_0
@@ -566,7 +627,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [208, 11]
+    coordinate: [200, 28.0]
     rotation: 0
     state: enabled
 - name: snr
@@ -583,7 +644,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 12.0]
+    coordinate: [680, 20.0]
     rotation: 0
     state: disabled
 - name: wifi_phy_hier_0
@@ -610,7 +671,9 @@ blocks:
 connections:
 - [blocks_message_strobe_0, strobe, ieee802_11_mac_0, app in]
 - [blocks_multiply_const_vxx_0, '0', channels_channel_model_0_0, '0']
+- [blocks_multiply_const_vxx_0, '0', channels_channel_model_0_0_0, '0']
 - [channels_channel_model_0_0, '0', wifi_phy_hier_0, '0']
+- [channels_channel_model_0_0_0, '0', wifi_phy_hier_0, '0']
 - [foo_packet_pad2_0, '0', blocks_multiply_const_vxx_0, '0']
 - [foo_wireshark_connector_0, '0', blocks_file_sink_0_0, '0']
 - [ieee802_11_mac_0, phy out, wifi_phy_hier_0, mac_in]
